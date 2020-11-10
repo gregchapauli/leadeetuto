@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "754478894975",
+    "firebase_url": "https://leadee-formation-78293.firebaseio.com",
+    "project_id": "leadee-formation-78293",
+    "storage_bucket": "leadee-formation-78293.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754478894975:android:8ab0594cd421a71531944a",
+        "android_client_info": {
+          "package_name": "com.gregdev.leadee"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "754478894975-5r4kq3p419nfr9ndoelg0mg1r6vrs56m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gregdev.leadee",
+            "certificate_hash": "d3a9a735ce7485dbb17a6ea37d3d90d2b93d87e1"
+          }
+        },
+        {
+          "client_id": "754478894975-716g4etsiqnd6e305fg84fhtfr36d24v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALesTNjRISm_BEhmx2_FWolLTGdvydQmk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "754478894975-716g4etsiqnd6e305fg84fhtfr36d24v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
