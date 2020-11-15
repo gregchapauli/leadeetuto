@@ -25,46 +25,57 @@ class _GuestScreenState extends State<GuestScreen> {
   void initState() {
     super.initState();
 
+    AuthScreen authScreen = AuthScreen(
+      onChangedStep: (index, value) async {
+        StateRegistration stateRegistration =
+            await _userService.mailinglist(value);
+
+        setState(() {
+          _indexSelected = index;
+          _email = value;
+
+          if (stateRegistration == StateRegistration.COMPLETE) {
+            _indexSelected = _widgets.length - 1;
+          }
+        });
+      },
+    );
+
+    PasswordScreen passwordScreen = PasswordScreen(
+      onChangedStep: (index, value) async {
+        UserModel connectedUserModel = await _userService.auth(
+          UserModel(
+            email: _email,
+            password: value,
+          ),
+        );
+
+        setState(() {
+          if (index != null) {
+            _indexSelected = index;
+          }
+
+          if (connectedUserModel != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomeScreen(),
+              ),
+            );
+          }
+        });
+      },
+    );
+
     _commonService.terms.then(
       (terms) => setState(
         () => _widgets.addAll([
-          AuthScreen(
-            onChangedStep: (index, value) => setState(() {
-              _indexSelected = index;
-              _email = value;
-            }),
-          ),
+          authScreen,
           TermScreen(
             terms: terms,
             onChangedStep: (index) => setState(() => _indexSelected = index),
           ),
-          PasswordScreen(
-            onChangedStep: (index, value) => setState(() {
-              if (index != null) {
-                _indexSelected = index;
-              }
-
-              if (value != null) {
-                _userService
-                    .auth(UserModel(
-                  email: _email,
-                  password: value,
-                ))
-                    .then(
-                  (value) {
-                    if (value.uid != null) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HomeScreen(),
-                        ),
-                      );
-                    }
-                  },
-                );
-              }
-            }),
-          ),
+          passwordScreen,
         ]),
       ),
     );
