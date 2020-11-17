@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:path/path.dart' show join;
+import 'package:path_provider/path_provider.dart';
 
 class CameraScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -16,6 +20,8 @@ class _CameraScreenState extends State<CameraScreen> {
   Future<void> _initializeControllerFuture;
   CameraController _controller;
   int _selectedCameraIndex = -1;
+  String _lastImage = null;
+  bool _loading = false;
 
   Future<void> initCamera(CameraDescription camera) async {
     _controller = CameraController(
@@ -41,6 +47,9 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _cameraToggle() async {
+    if (_lastImage != null) {
+      _lastImage = null;
+    }
     setState(() {
       _selectedCameraIndex = _selectedCameraIndex > -1
           ? _selectedCameraIndex == 0
@@ -50,6 +59,21 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     await initCamera(widget.cameras[_selectedCameraIndex]);
+  }
+
+  Future<void> _takePhoto() async {
+    try {
+      await _initializeControllerFuture;
+
+      String pathImage = join((await getTemporaryDirectory()).path,
+          '${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+      await _controller.takePicture(pathImage);
+
+      setState(() => _lastImage = pathImage);
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -67,8 +91,24 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Size size = MediaQuery.of(context).size;
+
     return SafeArea(
       child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          elevation: 0.0,
+          backgroundColor: Colors.transparent,
+          leading: _lastImage != null
+              ? FlatButton(
+                  onPressed: () => setState(() => _lastImage = null),
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                  ),
+                )
+              : null,
+        ),
         body: FutureBuilder(
           future: _initializeControllerFuture,
           builder: (context, snapshot) {
@@ -76,59 +116,103 @@ class _CameraScreenState extends State<CameraScreen> {
               return Stack(
                 alignment: AlignmentDirectional.bottomCenter,
                 children: [
-                  CameraPreview(_controller),
-                  Positioned(
-                    left: 50.0,
-                    bottom: 50.0,
-                    child: Container(
-                      height: 50.0,
-                      width: 50.0,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          width: 3.0,
-                          color: Colors.white,
-                        ),
+                  Transform.scale(
+                    scale: _controller.value.aspectRatio / size.aspectRatio,
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: _controller.value.aspectRatio,
+                        child: _lastImage != null
+                            ? Image(
+                                image: FileImage(
+                                  File(_lastImage),
+                                ),
+                              )
+                            : CameraPreview(_controller),
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          customBorder: CircleBorder(),
-                          onTap: () => print('gallery access'),
-                          child: Icon(
-                            Icons.photo_size_select_actual,
+                    ),
+                  ),
+                  Visibility(
+                    visible: _lastImage == null,
+                    child: Positioned(
+                      left: 50.0,
+                      bottom: 50.0,
+                      child: Container(
+                        height: 50.0,
+                        width: 50.0,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            width: 3.0,
                             color: Colors.white,
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: CircleBorder(),
+                            onTap: () => print('gallery access'),
+                            child: Icon(
+                              Icons.photo_size_select_actual,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  Positioned(
-                    right: 50.0,
-                    bottom: 50.0,
-                    child: Container(
-                      height: 50.0,
-                      width: 50.0,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          width: 3.0,
-                          color: Colors.white,
-                        ),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          customBorder: CircleBorder(),
-                          onTap: _cameraToggle,
-                          child: Icon(
-                            Icons.loop,
+                  Visibility(
+                    visible: _loading == true,
+                    child: Positioned(
+                      right: 50.0,
+                      bottom: 50.0,
+                      child: Container(
+                        height: 50.0,
+                        width: 50.0,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            width: 3.0,
                             color: Colors.white,
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: CircleBorder(),
+                            onTap: _cameraToggle,
+                            child: Icon(
+                              Icons.loop,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
+                  Visibility(
+                    visible: _lastImage != null,
+                    child: Positioned(
+                        bottom: 30.0,
+                        left: 20.0,
+                        child: Row(
+                          children: [
+                            SpinKitThreeBounce(
+                              color: Colors.white,
+                              size: 12.0,
+                            ),
+                            SizedBox(
+                              width: 5.0,
+                            ),
+                            Text(
+                              'Publishing...',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18.0,
+                              ),
+                            )
+                          ],
+                        )),
+                  )
                 ],
               );
             }
@@ -138,31 +222,55 @@ class _CameraScreenState extends State<CameraScreen> {
             );
           },
         ),
-        floatingActionButton: Container(
-          margin: EdgeInsets.only(
-            bottom: 30.0,
-          ),
-          height: 80.0,
-          width: 80.0,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              width: 3.0,
-              color: Colors.white,
-            ),
-          ),
-          child: FittedBox(
-            child: InkWell(
-              onLongPress: () => print('take video'),
-              child: FloatingActionButton(
-                onPressed: () => print('take photo'),
-                backgroundColor: Colors.transparent,
+        floatingActionButton: _lastImage == null
+            ? Container(
+                margin: EdgeInsets.only(
+                  bottom: 30.0,
+                ),
+                height: 80.0,
+                width: 80.0,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    width: 3.0,
+                    color: Colors.white,
+                  ),
+                ),
+                child: FittedBox(
+                  child: InkWell(
+                    onLongPress: () => print('take video'),
+                    child: FloatingActionButton(
+                      onPressed: _takePhoto,
+                      backgroundColor: Colors.transparent,
+                      elevation: 0.0,
+                    ),
+                  ),
+                ),
+              )
+            : FloatingActionButton.extended(
                 elevation: 0.0,
+                shape: RoundedRectangleBorder(),
+                backgroundColor: Colors.white.withOpacity(0.6),
+                onPressed: () async {
+                  setState(() => _loading = !_loading);
+
+                  await Future.delayed(Duration(seconds: 3));
+
+                  setState(() => _lastImage = null);
+                  setState(() => _loading = !_loading);
+                },
+                label: Text(
+                  'Publish',
+                  style: TextStyle(color: Colors.black),
+                ),
+                icon: Icon(
+                  Icons.send,
+                  color: Colors.black,
+                ),
               ),
-            ),
-          ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButtonLocation: _lastImage == null
+            ? FloatingActionButtonLocation.centerFloat
+            : FloatingActionButtonLocation.endFloat,
       ),
     );
   }

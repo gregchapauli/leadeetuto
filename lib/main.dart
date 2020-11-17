@@ -2,8 +2,6 @@ import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:leadeetuto/screen/Camera.dart';
-import 'package:leadeetuto/screen/Guest.dart';
-import 'package:leadeetuto/screen/dashboard/Home.dart';
 import 'package:leadeetuto/screen/services/UserService.dart';
 
 void main() async {

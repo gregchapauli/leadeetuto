@@ -1,8 +1,5 @@
-import 'dart:ffi';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:leadeetuto/models/UserModel.dart';
 
 enum StateRegistration {
@@ -20,7 +17,7 @@ class UserService {
             uid: user.uid,
             email: user.email,
           ),
-        );
+    );
   }
 
   Future<UserModel> auth(UserModel userModel) async {
